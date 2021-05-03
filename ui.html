@@ -1,0 +1,17 @@
+<h2>Screen Name Export</h2>
+<p>Please enter current file key.</p>
+<p>File key: <input id="fileKey" value=""></p>
+<button id="export">Create</button>
+<button id="cancel">Cancel</button>
+<script>
+
+document.getElementById('export').onclick = () => {
+  const fileKey = document.getElementById('fileKey').value;
+  parent.postMessage({ pluginMessage: { type: 'screen-name-export', fileKey } }, '*')
+}
+
+document.getElementById('cancel').onclick = () => {
+  parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
+}
+
+</script>

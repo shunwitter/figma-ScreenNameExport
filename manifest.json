@@ -1,0 +1,7 @@
+{
+  "name": "Screen Name Export",
+  "id": "970942453220570484",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html"
+}
