@@ -47,7 +47,7 @@ function main(fileKey: string) {
   // スクリーンが選択されてなければ停止
   if (figma.currentPage.selection.length === 0) {
     figma.closePlugin();
-    alert("Please select frames.");
+    alert("Please select at least one frame.");
     return;
   }
 
@@ -95,5 +95,8 @@ function main(fileKey: string) {
 figma.ui.onmessage = (msg) => {
   if (msg.type === "screen-name-export") {
     main(msg.fileKey);
+  }
+  if (msg.type === "cancel") {
+    figma.closePlugin();
   }
 }

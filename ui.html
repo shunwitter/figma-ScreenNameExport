@@ -1,17 +1,70 @@
-<h2>Screen Name Export</h2>
-<p>Please enter current file key.</p>
-<p>File key: <input id="fileKey" value=""></p>
-<button id="export">Create</button>
-<button id="cancel">Cancel</button>
-<script>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    color: #333333;
+  }
+  html {
+    font-family: sans-serif;
+    font-size: 16px;
+  }
+  h1, h2, h3, p {
+    margin : 0;
+    margin-bottom: 0.5rem;
+    padding: 0;
+  }
+  a {
+    color: #229EFB;
+  }
+  input {
+    display: block;
+    border: 1px solid #989898;
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    width: 100%;
+  }
+  button {
+    transition: opacity 0.2s ease-out;
+    cursor: pointer;
+    border: none;
+    color: #333333;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    background-color: #ddd;
+  }
+  button:hover {
+    opacity: 0.7;
+  }
+  button.commit {
+    background-color: #229EFB;
+    color: #fff;
+  }
+  .container {
+    padding: 1rem;
+  }
+  .caption {
+    font-size: 0.825rem;
+  }
+</style>
 
+<div class="container" id="screen-name-export">
+  <p>Please enter file key.</p>
+  <input id="fileKey" value="" placeholder="File key">
+  <p class="caption"><a href="https://workabroad.jp/" target="_blank" rel="noopener noreferrer">What is file key?</a></p>
+  <div style="margin-top: 2rem;">
+    <button id="export" class="commit">Export</button>
+    <button id="cancel">Cancel</button>
+  </div>
+</div>
+
+<script>
 document.getElementById('export').onclick = () => {
   const fileKey = document.getElementById('fileKey').value;
   parent.postMessage({ pluginMessage: { type: 'screen-name-export', fileKey } }, '*')
 }
-
 document.getElementById('cancel').onclick = () => {
   parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
 }
-
 </script>

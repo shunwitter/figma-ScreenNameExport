@@ -38,7 +38,7 @@ function main(fileKey) {
     // スクリーンが選択されてなければ停止
     if (figma.currentPage.selection.length === 0) {
         figma.closePlugin();
-        alert("Please select frames.");
+        alert("Please select at least one frame.");
         return;
     }
     // 名前とURLを作成
@@ -83,5 +83,8 @@ function main(fileKey) {
 figma.ui.onmessage = (msg) => {
     if (msg.type === "screen-name-export") {
         main(msg.fileKey);
+    }
+    if (msg.type === "cancel") {
+        figma.closePlugin();
     }
 };
