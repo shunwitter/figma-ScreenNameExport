@@ -32,11 +32,14 @@ figma.ui.onmessage = msg => {
 */
 const dateString = new Date().toISOString().split(".")[0].replace("T", "");
 const PAGE_NAME = `Screen Names ${dateString}`;
-const STORED_FILE_URL_KEY = "storedFileUrl";
+const STORED_FILE_URL = "storedFileUrl";
+const STORAGE_EXPIRE_TIME = 1 * 60 * 1000; // Restore file URL within 30 min.
 figma.showUI(__html__);
-figma.clientStorage.getAsync(STORED_FILE_URL_KEY)
-    .then((storedFileUrl) => {
-    figma.ui.postMessage({ storedFileUrl });
+figma.clientStorage.getAsync(STORED_FILE_URL)
+    .then(({ fileUrl, expire }) => {
+    if (Number(new Date()) < expire) {
+        figma.ui.postMessage({ fileUrl });
+    }
 });
 function main(fileKey) {
     const screenList = [];
@@ -87,6 +90,8 @@ function main(fileKey) {
 }
 figma.ui.onmessage = (msg) => {
     if (msg.type === "screen-name-export") {
+        // Only private plugin can access fileKey.
+        // https://www.figma.com/plugin-docs/api/figma/#filekey
         const { fileUrl } = msg;
         const matched = fileUrl.match(/https:\/\/www\.figma\.com\/file\/(.*)\//);
         if (matched === null) {
@@ -94,7 +99,7 @@ figma.ui.onmessage = (msg) => {
             alert("File URL is invalid.");
         }
         else {
-            figma.clientStorage.setAsync(STORED_FILE_URL_KEY, fileUrl)
+            figma.clientStorage.setAsync(STORED_FILE_URL, { fileUrl, expire: Number(new Date()) + STORAGE_EXPIRE_TIME })
                 .then(() => {
                 const fileKey = matched[1];
                 main(fileKey);

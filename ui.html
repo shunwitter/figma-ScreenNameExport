@@ -71,9 +71,9 @@ document.getElementById("cancel").onclick = () => {
 // ローカル保存したURLを復元
 window.addEventListener("message", (event) => {
   if (event.origin !== "https://www.figma.com") { return; }
-  const { storedFileUrl } = event.data.pluginMessage;
-  if (storedFileUrl) {
-    document.getElementById("fileUrl").value = storedFileUrl;
+  const { fileUrl } = event.data.pluginMessage;
+  if (fileUrl) {
+    document.getElementById("fileUrl").value = fileUrl;
   }
 });
 </script>
