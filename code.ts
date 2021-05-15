@@ -41,8 +41,16 @@ const dateString = new Date().toISOString().split(".")[0].replace("T", "");
 const PAGE_NAME = `Screen Names ${dateString}`;
 
 
-function main(fileKey: string) {
+function main(fileUrl: string) {
   const screenList = [];
+  const matched = fileUrl.match(/https:\/\/www\.figma\.com\/file\/(.*)\//);
+  // File URL から fileKey が抽出できなければ停止
+  if (matched === null) {
+    figma.closePlugin();
+    alert("File URL is invalid.");
+    return;
+  }
+  const fileKey = matched[1];
 
   // スクリーンが選択されてなければ停止
   if (figma.currentPage.selection.length === 0) {
@@ -88,13 +96,13 @@ function main(fileKey: string) {
     })
 
   // プラグイン終了
-  figma.closePlugin();
+  figma.closePlugin(`New page \"${PAGE_NAME}\" created.`);
 }
 
 
 figma.ui.onmessage = (msg) => {
   if (msg.type === "screen-name-export") {
-    main(msg.fileKey);
+    main(msg.fileUrl);
   }
   if (msg.type === "cancel") {
     figma.closePlugin();

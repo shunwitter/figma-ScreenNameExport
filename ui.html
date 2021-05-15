@@ -50,9 +50,9 @@
 </style>
 
 <div class="container" id="screen-name-export">
-  <p>Please enter file key.</p>
-  <input id="fileKey" value="" placeholder="File key">
-  <p class="caption"><a href="https://workabroad.jp/" target="_blank" rel="noopener noreferrer">What is file key?</a></p>
+  <p>Please enter File URL.</p>
+  <input id="fileUrl" value="" placeholder="File URL">
+  <p class="caption"><a href="https://workabroad.jp/" target="_blank" rel="noopener noreferrer">What is file URL?</a></p>
   <div style="margin-top: 2rem;">
     <button id="export" class="commit">Export</button>
     <button id="cancel">Cancel</button>
@@ -61,8 +61,8 @@
 
 <script>
 document.getElementById('export').onclick = () => {
-  const fileKey = document.getElementById('fileKey').value;
-  parent.postMessage({ pluginMessage: { type: 'screen-name-export', fileKey } }, '*')
+  const fileUrl = document.getElementById('fileUrl').value;
+  parent.postMessage({ pluginMessage: { type: 'screen-name-export', fileUrl } }, '*')
 }
 document.getElementById('cancel').onclick = () => {
   parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
