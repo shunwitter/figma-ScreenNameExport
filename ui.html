@@ -50,9 +50,9 @@
 </style>
 
 <div class="container" id="screen-name-export">
-  <p>Please enter File URL.</p>
-  <input id="fileUrl" value="" placeholder="File URL">
-  <p class="caption"><a href="https://workabroad.jp/" target="_blank" rel="noopener noreferrer">What is file URL?</a></p>
+  <p>Please enter file URL (Share link)</p>
+  <input id="fileUrl" value="" placeholder="URL">
+  <p class="caption"><a href="https://workabroad.jp/posts/2252" target="_blank" rel="noopener noreferrer">How to use this plugin</a></p>
   <div style="margin-top: 2rem;">
     <button id="export" class="commit">Export</button>
     <button id="cancel">Cancel</button>
@@ -60,11 +60,20 @@
 </div>
 
 <script>
-document.getElementById('export').onclick = () => {
-  const fileUrl = document.getElementById('fileUrl').value;
-  parent.postMessage({ pluginMessage: { type: 'screen-name-export', fileUrl } }, '*')
-}
-document.getElementById('cancel').onclick = () => {
-  parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
-}
+document.getElementById("export").onclick = () => {
+  const fileUrl = document.getElementById("fileUrl").value;
+  parent.postMessage({ pluginMessage: { type: "screen-name-export", fileUrl } }, "*")
+};
+document.getElementById("cancel").onclick = () => {
+  parent.postMessage({ pluginMessage: { type: "cancel" } }, "*")
+};
+
+// ローカル保存したURLを復元
+window.addEventListener("message", (event) => {
+  if (event.origin !== "https://www.figma.com") { return; }
+  const { storedFileUrl } = event.data.pluginMessage;
+  if (storedFileUrl) {
+    document.getElementById("fileUrl").value = storedFileUrl;
+  }
+});
 </script>

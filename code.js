@@ -30,19 +30,16 @@ figma.ui.onmessage = msg => {
   figma.closePlugin();
 };
 */
-figma.showUI(__html__);
 const dateString = new Date().toISOString().split(".")[0].replace("T", "");
 const PAGE_NAME = `Screen Names ${dateString}`;
-function main(fileUrl) {
+const STORED_FILE_URL_KEY = "storedFileUrl";
+figma.showUI(__html__);
+figma.clientStorage.getAsync(STORED_FILE_URL_KEY)
+    .then((storedFileUrl) => {
+    figma.ui.postMessage({ storedFileUrl });
+});
+function main(fileKey) {
     const screenList = [];
-    const matched = fileUrl.match(/https:\/\/www\.figma\.com\/file\/(.*)\//);
-    // File URL から fileKey が抽出できなければ停止
-    if (matched === null) {
-        figma.closePlugin();
-        alert("File URL is invalid.");
-        return;
-    }
-    const fileKey = matched[1];
     // スクリーンが選択されてなければ停止
     if (figma.currentPage.selection.length === 0) {
         figma.closePlugin();
@@ -90,7 +87,19 @@ function main(fileUrl) {
 }
 figma.ui.onmessage = (msg) => {
     if (msg.type === "screen-name-export") {
-        main(msg.fileUrl);
+        const { fileUrl } = msg;
+        const matched = fileUrl.match(/https:\/\/www\.figma\.com\/file\/(.*)\//);
+        if (matched === null) {
+            figma.closePlugin();
+            alert("File URL is invalid.");
+        }
+        else {
+            figma.clientStorage.setAsync(STORED_FILE_URL_KEY, fileUrl)
+                .then(() => {
+                const fileKey = matched[1];
+                main(fileKey);
+            });
+        }
     }
     if (msg.type === "cancel") {
         figma.closePlugin();
