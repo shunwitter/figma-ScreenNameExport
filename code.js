@@ -1,47 +1,17 @@
 // This plugin will open a window to prompt the user to enter a number, and
 // it will then create that many rectangles on the screen.
-// This file holds the main code for the plugins. It has access to the *document*.
-// You can access browser APIs in the <script> tag inside "ui.html" which has a
-// full browser environment (see documentation).
-// This shows the HTML page in "ui.html".
-// figma.showUI(__html__);
-// Calls to "parent.postMessage" from within the HTML page will trigger this
-// callback. The callback will be passed the "pluginMessage" property of the
-// posted message.
-/*
-figma.ui.onmessage = msg => {
-  // One way of distinguishing between different types of messages sent from
-  // your HTML page is to use an object with a "type" property like this.
-  if (msg.type === 'create-rectangles') {
-    const nodes: SceneNode[] = [];
-    for (let i = 0; i < msg.count; i++) {
-      const rect = figma.createRectangle();
-      rect.x = i * 150;
-      rect.fills = [{type: 'SOLID', color: {r: 1, g: 0.5, b: 0}}];
-      figma.currentPage.appendChild(rect);
-      nodes.push(rect);
-    }
-    figma.currentPage.selection = nodes;
-    figma.viewport.scrollAndZoomIntoView(nodes);
-  }
-
-  // Make sure to close the plugin when you're done. Otherwise the plugin will
-  // keep running, which shows the cancel button at the bottom of the screen.
-  figma.closePlugin();
-};
-*/
 const dateString = new Date().toISOString().split(".")[0].replace("T", "");
 const PAGE_NAME = `Screen Names ${dateString}`;
 const STORED_FILE_URL = "storedFileUrl";
 const STORAGE_EXPIRE_TIME = 1 * 60 * 1000; // Restore file URL within 30 min.
-figma.showUI(__html__);
+figma.showUI(__html__, { height: 250 });
 figma.clientStorage.getAsync(STORED_FILE_URL)
     .then(({ fileUrl, expire }) => {
     if (Number(new Date()) < expire) {
         figma.ui.postMessage({ fileUrl });
     }
 });
-function main(fileKey) {
+function main(fileKey, options) {
     const screenList = [];
     // スクリーンが選択されてなければ停止
     if (figma.currentPage.selection.length === 0) {
@@ -51,7 +21,11 @@ function main(fileKey) {
     }
     // 名前とURLを作成
     for (const node of figma.currentPage.selection) {
-        if (node.type === "FRAME") {
+        const isValidType = node.type === "FRAME";
+        const underscoreSkip = options.skipUnderscore && node.name.match(/^_/) !== null;
+        const duplicatedSkip = options.skipDuplicated && screenList.map(scr => scr.name).indexOf(node.name) !== -1;
+        console.log(node.name, duplicatedSkip);
+        if (isValidType && !underscoreSkip && !duplicatedSkip) {
             const link = `https://www.figma.com/file/${fileKey}/${figma.root.name}?node-id=${encodeURIComponent(node.id)}`;
             screenList.push({ link, name: node.name });
         }
@@ -92,7 +66,7 @@ figma.ui.onmessage = (msg) => {
     if (msg.type === "screen-name-export") {
         // Only private plugin can access fileKey.
         // https://www.figma.com/plugin-docs/api/figma/#filekey
-        const { fileUrl } = msg;
+        const { fileUrl, options } = msg;
         const matched = fileUrl.match(/https:\/\/www\.figma\.com\/file\/(.*)\//);
         if (matched === null) {
             figma.closePlugin();
@@ -102,7 +76,7 @@ figma.ui.onmessage = (msg) => {
             figma.clientStorage.setAsync(STORED_FILE_URL, { fileUrl, expire: Number(new Date()) + STORAGE_EXPIRE_TIME })
                 .then(() => {
                 const fileKey = matched[1];
-                main(fileKey);
+                main(fileKey, options);
             });
         }
     }

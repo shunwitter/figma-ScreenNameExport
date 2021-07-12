@@ -34,13 +34,17 @@ figma.ui.onmessage = msg => {
 };
 */
 
+type MainOptions = {
+  skipUnderscore: boolean,
+  skipDuplicated: boolean,
+}
 
 const dateString = new Date().toISOString().split(".")[0].replace("T", "");
 const PAGE_NAME = `Screen Names ${dateString}`;
 const STORED_FILE_URL = "storedFileUrl";
 const STORAGE_EXPIRE_TIME = 1 * 60 * 1000; // Restore file URL within 30 min.
 
-figma.showUI(__html__);
+figma.showUI(__html__, { height: 250 });
 figma.clientStorage.getAsync(STORED_FILE_URL)
   .then(({ fileUrl, expire }) => {
     if (Number(new Date()) < expire) {
@@ -49,7 +53,7 @@ figma.clientStorage.getAsync(STORED_FILE_URL)
   });
 
 
-function main(fileKey: string) {
+function main(fileKey: string, options: MainOptions) {
   const screenList = [];
 
   // スクリーンが選択されてなければ停止
@@ -61,7 +65,11 @@ function main(fileKey: string) {
 
   // 名前とURLを作成
   for (const node of figma.currentPage.selection) {
-    if (node.type === "FRAME") {
+    const isValidType = node.type === "FRAME";
+    const underscoreSkip = options.skipUnderscore && node.name.match(/^_/) !== null;
+    const duplicatedSkip = options.skipDuplicated && screenList.map(scr => scr.name).indexOf(node.name) !== -1;
+    console.log(node.name, duplicatedSkip);
+    if (isValidType && !underscoreSkip && !duplicatedSkip) {
       const link = `https://www.figma.com/file/${fileKey}/${figma.root.name}?node-id=${encodeURIComponent(node.id)}`;
       screenList.push({ link, name: node.name });
     }
@@ -105,7 +113,7 @@ figma.ui.onmessage = (msg) => {
   if (msg.type === "screen-name-export") {
     // Only private plugin can access fileKey.
     // https://www.figma.com/plugin-docs/api/figma/#filekey
-    const { fileUrl } = msg;
+    const { fileUrl, options } = msg;
     const matched = fileUrl.match(/https:\/\/www\.figma\.com\/file\/(.*)\//);
     if (matched === null) {
       figma.closePlugin();
@@ -114,7 +122,7 @@ figma.ui.onmessage = (msg) => {
       figma.clientStorage.setAsync(STORED_FILE_URL, { fileUrl, expire: Number(new Date()) + STORAGE_EXPIRE_TIME })
         .then(() => {
           const fileKey = matched[1];
-          main(fileKey);
+          main(fileKey, options);
         });
     }
   }

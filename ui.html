@@ -16,7 +16,7 @@
   a {
     color: #229EFB;
   }
-  input {
+  input[type="text"] {
     display: block;
     border: 1px solid #989898;
     border-radius: 0.25rem;
@@ -47,12 +47,27 @@
   .caption {
     font-size: 0.825rem;
   }
+  .option-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+  }
 </style>
 
 <div class="container" id="screen-name-export">
-  <p>Please enter file URL (Share link)</p>
-  <input id="fileUrl" value="" placeholder="URL">
+  <p>Please enter share link URL</p>
+  <input type="text" id="fileUrl" value="">
   <p class="caption"><a href="https://workabroad.jp/posts/2252" target="_blank" rel="noopener noreferrer">How to use this plugin</a></p>
+  <div>
+    <label class="option-item">
+      <input type="checkbox" id="skip-underscore" checked />
+      Skip frames started from _
+    </label>
+    <label class="option-item">
+      <input type="checkbox" id="skip-duplicated" checked />
+      Skip duplicated name
+    </label>
+  </div>
   <div style="margin-top: 2rem;">
     <button id="export" class="commit">Export</button>
     <button id="cancel">Cancel</button>
@@ -60,9 +75,16 @@
 </div>
 
 <script>
+const fileUrlElement = document.getElementById("fileUrl");
+fileUrlElement.focus();
+
 document.getElementById("export").onclick = () => {
-  const fileUrl = document.getElementById("fileUrl").value;
-  parent.postMessage({ pluginMessage: { type: "screen-name-export", fileUrl } }, "*")
+  const skipUnderscore = !!document.getElementById("skip-underscore").checked;
+  const skipDuplicated = !!document.getElementById("skip-duplicated").checked;
+  const options = { skipUnderscore, skipDuplicated };
+
+  const fileUrl = fileUrlElement.value;
+  parent.postMessage({ pluginMessage: { type: "screen-name-export", fileUrl, options } }, "*")
 };
 document.getElementById("cancel").onclick = () => {
   parent.postMessage({ pluginMessage: { type: "cancel" } }, "*")
