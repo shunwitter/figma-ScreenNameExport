@@ -70,7 +70,7 @@ function main(fileKey: string, options: MainOptions) {
     const duplicatedSkip = options.skipDuplicated && screenList.map(scr => scr.name).indexOf(node.name) !== -1;
     console.log(node.name, duplicatedSkip);
     if (isValidType && !underscoreSkip && !duplicatedSkip) {
-      const link = `https://www.figma.com/file/${fileKey}/${figma.root.name}?node-id=${encodeURIComponent(node.id)}`;
+      const link = `https://www.figma.com/file/${fileKey}/${encodeURI(figma.root.name)}?node-id=${encodeURIComponent(node.id)}`;
       screenList.push({ link, name: node.name });
     }
   }
@@ -89,7 +89,19 @@ function main(fileKey: string, options: MainOptions) {
             if (a.name > b.name) { return 1; }
             return 0;
           });
-          nameNode.characters = sortedScreens.map((screen) => screen.name).join("\n");
+          let nameCharIndex = 0;
+          // nameNode.characters = sortedScreens.map((screen) => screen.name).join("\n");
+          sortedScreens.forEach((screen) => {
+            nameNode.characters += `${screen.name}\n`;
+            const indexOffset = screen.name.length;
+            console.log(nameCharIndex, nameCharIndex + indexOffset, screen.link);
+            nameNode.setRangeHyperlink(
+              nameCharIndex,
+              nameCharIndex + indexOffset,
+              { type: "URL", value: screen.link }
+            );
+            nameCharIndex += (indexOffset + 1);
+          });
           page.appendChild(nameNode);
 
           const linkNode = figma.createText();
