@@ -53,14 +53,16 @@ function main(fileKey, options) {
                 linkNode.characters = sortedScreens.map((screen) => screen.link).join("\n");
                 linkNode.x = 400;
                 page.appendChild(linkNode);
+                // プラグイン終了
+                figma.closePlugin(`New page \"${PAGE_NAME}\" created.`);
             }
         }
     })
         .catch((error) => {
         console.log(error);
+        // プラグイン終了
+        figma.closePlugin('Something went wrong.');
     });
-    // プラグイン終了
-    figma.closePlugin(`New page \"${PAGE_NAME}\" created.`);
 }
 figma.ui.onmessage = (msg) => {
     if (msg.type === "screen-name-export") {
