@@ -9,6 +9,7 @@ const PAGE_NAME = `Screen Names ${dateString}`;
 const STORED_FILE_URL = "storedFileUrl";
 const STORAGE_EXPIRE_TIME = 30 * 60 * 1000; // Restore file URL within 30 min.
 const NODE_OFFSET_X = 20;
+const FONT_NAME = { family: "Roboto Mono", style: "Regular" };
 const FONT_SIZE = 12 as const;
 const LINE_HEIGHT = { value: 20, unit: "PIXELS" } as const;
 
@@ -79,19 +80,22 @@ function main(fileKey: string, options: MainOptions) {
   // ページを作成してテキストを挿入
   const page = figma.createPage();
   page.name = PAGE_NAME;
-  figma.loadFontAsync({ family: "Roboto", style: "Regular" })
+  figma.loadFontAsync(FONT_NAME)
     .then(() => {
       for (const page of figma.root.children) {
         if (page.name === PAGE_NAME) {
           const indexNode = figma.createText();
           indexNode.name = "Index";
+          indexNode.fontName = FONT_NAME;
           indexNode.fontSize = FONT_SIZE;
           indexNode.lineHeight = LINE_HEIGHT;
+          indexNode.textAlignHorizontal = "LEFT";
           indexNode.characters = filteredScreens.map((screen, index) => index + 1).join("\n");
           page.appendChild(indexNode);
 
           const nameNode = figma.createText();
           nameNode.name = "Screen Name";
+          nameNode.fontName = FONT_NAME;
           nameNode.fontSize = FONT_SIZE;
           nameNode.lineHeight = LINE_HEIGHT;
           nameNode.characters = filteredScreens.map((screen) => screen.name).join("\n");
@@ -100,6 +104,7 @@ function main(fileKey: string, options: MainOptions) {
 
           const idNode = figma.createText();
           idNode.name = "ID-like String";
+          idNode.fontName = FONT_NAME;
           idNode.fontSize = FONT_SIZE;
           idNode.lineHeight = LINE_HEIGHT;
           idNode.characters = filteredScreens.map((screen) => convertToScreenId(screen.name)).join("\n");
@@ -108,6 +113,7 @@ function main(fileKey: string, options: MainOptions) {
 
           const linkNode = figma.createText();
           linkNode.name = "Link";
+          linkNode.fontName = FONT_NAME;
           linkNode.fontSize = FONT_SIZE;
           linkNode.lineHeight = LINE_HEIGHT;
           linkNode.characters = filteredScreens.map((screen) => screen.link).join("\n");
