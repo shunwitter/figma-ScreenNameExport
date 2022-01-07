@@ -8,7 +8,7 @@ const dateString = new Date().toISOString().split(".")[0].replace("T", "");
 const PAGE_NAME = `Screen Names ${dateString}`;
 const STORED_FILE_URL = "storedFileUrl";
 const STORAGE_EXPIRE_TIME = 30 * 60 * 1000; // Restore file URL within 30 min.
-const NODE_OFFSET_X = 80;
+const NODE_OFFSET_X = 20;
 const FONT_SIZE = 12 as const;
 const LINE_HEIGHT = { value: 20, unit: "PIXELS" } as const;
 
@@ -83,11 +83,19 @@ function main(fileKey: string, options: MainOptions) {
     .then(() => {
       for (const page of figma.root.children) {
         if (page.name === PAGE_NAME) {
+          const indexNode = figma.createText();
+          indexNode.name = "Index";
+          indexNode.fontSize = FONT_SIZE;
+          indexNode.lineHeight = LINE_HEIGHT;
+          indexNode.characters = filteredScreens.map((screen, index) => index + 1).join("\n");
+          page.appendChild(indexNode);
+
           const nameNode = figma.createText();
           nameNode.name = "Screen Name";
           nameNode.fontSize = FONT_SIZE;
           nameNode.lineHeight = LINE_HEIGHT;
           nameNode.characters = filteredScreens.map((screen) => screen.name).join("\n");
+          nameNode.x = indexNode.width + NODE_OFFSET_X;
           page.appendChild(nameNode);
 
           const idNode = figma.createText();
@@ -95,7 +103,7 @@ function main(fileKey: string, options: MainOptions) {
           idNode.fontSize = FONT_SIZE;
           idNode.lineHeight = LINE_HEIGHT;
           idNode.characters = filteredScreens.map((screen) => convertToScreenId(screen.name)).join("\n");
-          idNode.x = nameNode.width + NODE_OFFSET_X;
+          idNode.x = indexNode.width + nameNode.width + NODE_OFFSET_X * 2;
           page.appendChild(idNode);
 
           const linkNode = figma.createText();
@@ -115,7 +123,7 @@ function main(fileKey: string, options: MainOptions) {
             linkNode.setRangeHyperlink(linkIndex, linkIndex + linkLength, { type: "URL", value: screen.link });
             linkIndex += linkLength + 1;
           });
-          linkNode.x = nameNode.width + idNode.width + NODE_OFFSET_X * 2;
+          linkNode.x = indexNode.width + nameNode.width + idNode.width + NODE_OFFSET_X * 3;
           page.appendChild(linkNode);
 
           // プラグイン終了
