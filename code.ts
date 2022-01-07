@@ -89,7 +89,7 @@ function main(fileKey: string, options: MainOptions) {
           indexNode.fontName = FONT_NAME;
           indexNode.fontSize = FONT_SIZE;
           indexNode.lineHeight = LINE_HEIGHT;
-          indexNode.textAlignHorizontal = "LEFT";
+          indexNode.textAlignHorizontal = "RIGHT";
           indexNode.characters = filteredScreens.map((screen, index) => index + 1).join("\n");
           page.appendChild(indexNode);
 
