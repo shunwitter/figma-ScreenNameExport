@@ -61,11 +61,15 @@
   <div>
     <label class="option-item">
       <input type="checkbox" id="skip-underscore" checked />
-      Skip frames started from _
+      Skip name starts from underscore
     </label>
     <label class="option-item">
       <input type="checkbox" id="skip-duplicated" checked />
       Skip duplicated name
+    </label>
+    <label class="option-item">
+      <input type="checkbox" id="slash-merge" checked />
+      Merge slash delimited name
     </label>
   </div>
   <div style="margin-top: 2rem;">
@@ -81,7 +85,8 @@ fileUrlElement.focus();
 document.getElementById("export").onclick = () => {
   const skipUnderscore = !!document.getElementById("skip-underscore").checked;
   const skipDuplicated = !!document.getElementById("skip-duplicated").checked;
-  const options = { skipUnderscore, skipDuplicated };
+  const slashMerge = !!document.getElementById("slash-merge").checked;
+  const options = { skipUnderscore, skipDuplicated, slashMerge };
 
   const fileUrl = fileUrlElement.value;
   parent.postMessage({ pluginMessage: { type: "screen-name-export", fileUrl, options } }, "*")

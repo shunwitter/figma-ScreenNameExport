@@ -1,48 +1,29 @@
-// This plugin will open a window to prompt the user to enter a number, and
-// it will then create that many rectangles on the screen.
-
-// This file holds the main code for the plugins. It has access to the *document*.
-// You can access browser APIs in the <script> tag inside "ui.html" which has a
-// full browser environment (see documentation).
-
-// This shows the HTML page in "ui.html".
-// figma.showUI(__html__);
-
-// Calls to "parent.postMessage" from within the HTML page will trigger this
-// callback. The callback will be passed the "pluginMessage" property of the
-// posted message.
-/*
-figma.ui.onmessage = msg => {
-  // One way of distinguishing between different types of messages sent from
-  // your HTML page is to use an object with a "type" property like this.
-  if (msg.type === 'create-rectangles') {
-    const nodes: SceneNode[] = [];
-    for (let i = 0; i < msg.count; i++) {
-      const rect = figma.createRectangle();
-      rect.x = i * 150;
-      rect.fills = [{type: 'SOLID', color: {r: 1, g: 0.5, b: 0}}];
-      figma.currentPage.appendChild(rect);
-      nodes.push(rect);
-    }
-    figma.currentPage.selection = nodes;
-    figma.viewport.scrollAndZoomIntoView(nodes);
-  }
-
-  // Make sure to close the plugin when you're done. Otherwise the plugin will
-  // keep running, which shows the cancel button at the bottom of the screen.
-  figma.closePlugin();
-};
-*/
-
 type MainOptions = {
   skipUnderscore: boolean,
   skipDuplicated: boolean,
+  slashMerge: boolean,
 }
 
 const dateString = new Date().toISOString().split(".")[0].replace("T", "");
 const PAGE_NAME = `Screen Names ${dateString}`;
 const STORED_FILE_URL = "storedFileUrl";
-const STORAGE_EXPIRE_TIME = 1 * 60 * 1000; // Restore file URL within 30 min.
+const STORAGE_EXPIRE_TIME = 30 * 60 * 1000; // Restore file URL within 30 min.
+const NODE_OFFSET_X = 80;
+const FONT_SIZE = 12 as const;
+const LINE_HEIGHT = { value: 20, unit: "PIXELS" } as const;
+
+function trim(text: string): string {
+  return text.replace(/^\s+|\s+$/g, "");
+}
+
+function snakeCase(text: string): string {
+  return text.replace(/\.?\s?([A-Z]+)/g, (x, y) => `_${y.toLowerCase()}`).replace(/^_/, "");
+}
+
+function convertToScreenId(text: string): string {
+  // "Screen A - State" will be "screen_a__state"
+  return snakeCase(text).replace(/\W/g, "_");
+}
 
 figma.showUI(__html__, { height: 250 });
 figma.clientStorage.getAsync(STORED_FILE_URL)
@@ -52,9 +33,8 @@ figma.clientStorage.getAsync(STORED_FILE_URL)
     }
   });
 
-
 function main(fileKey: string, options: MainOptions) {
-  const screenList = [];
+  const screenList: Array<{ name: string, link: string }> = [];
 
   // スクリーンが選択されてなければ停止
   if (figma.currentPage.selection.length === 0) {
@@ -67,34 +47,75 @@ function main(fileKey: string, options: MainOptions) {
   for (const node of figma.currentPage.selection) {
     const isValidType = node.type === "FRAME";
     const underscoreSkip = options.skipUnderscore && node.name.match(/^_/) !== null;
-    const duplicatedSkip = options.skipDuplicated && screenList.map(scr => scr.name).indexOf(node.name) !== -1;
-    console.log(node.name, duplicatedSkip);
-    if (isValidType && !underscoreSkip && !duplicatedSkip) {
-      const link = `https://www.figma.com/file/${fileKey}/${figma.root.name}?node-id=${encodeURIComponent(node.id)}`;
-      screenList.push({ link, name: node.name });
+    const duplicatedSkip = options.skipDuplicated && screenList.some(scr => scr.name === node.name);
+    if (!isValidType || underscoreSkip || duplicatedSkip) {
+      continue;
     }
+    const link = `https://www.figma.com/file/${fileKey}/${figma.root.name}?node-id=${encodeURIComponent(node.id)}`;
+    screenList.push({ link, name: node.name });
   }
+
+  // ソートしてスラッシュ区切りをマージ
+  const filteredScreens = screenList.sort((a, b) => {
+    if (a.name < b.name) { return -1; }
+    if (a.name > b.name) { return 1; }
+    return 0;
+  }).map((scr) => {
+    if (!options.slashMerge) { return scr; }
+    const prefix = scr.name.indexOf("/") !== -1 ? trim(scr.name.split("/")[0]) : null;
+    if (!!prefix) {
+      if (screenList.some(item => item.name === prefix)) {
+        // prefix と完全一致の名前があればスキップ
+        return null;
+      } else {
+        // 検知したがリストにない場合は prefix を名前にして追加
+        scr.name = prefix;
+        return scr;
+      }
+    }
+    return scr;
+  }).filter(scr => scr);
 
   // ページを作成してテキストを挿入
   const page = figma.createPage();
   page.name = PAGE_NAME;
-
   figma.loadFontAsync({ family: "Roboto", style: "Regular" })
     .then(() => {
       for (const page of figma.root.children) {
         if (page.name === PAGE_NAME) {
           const nameNode = figma.createText();
-          const sortedScreens = screenList.sort((a, b) => {
-            if (a.name < b.name) { return -1; }
-            if (a.name > b.name) { return 1; }
-            return 0;
-          });
-          nameNode.characters = sortedScreens.map((screen) => screen.name).join("\n");
+          nameNode.name = "Screen Name";
+          nameNode.fontSize = FONT_SIZE;
+          nameNode.lineHeight = LINE_HEIGHT;
+          nameNode.characters = filteredScreens.map((screen) => screen.name).join("\n");
           page.appendChild(nameNode);
 
+          const idNode = figma.createText();
+          idNode.name = "ID-like String";
+          idNode.fontSize = FONT_SIZE;
+          idNode.lineHeight = LINE_HEIGHT;
+          idNode.characters = filteredScreens.map((screen) => convertToScreenId(screen.name)).join("\n");
+          idNode.x = nameNode.width + NODE_OFFSET_X;
+          page.appendChild(idNode);
+
           const linkNode = figma.createText();
-          linkNode.characters = sortedScreens.map((screen) => screen.link).join("\n");
-          linkNode.x = 400;
+          linkNode.name = "Link";
+          linkNode.fontSize = FONT_SIZE;
+          linkNode.lineHeight = LINE_HEIGHT;
+          linkNode.characters = filteredScreens.map((screen) => screen.link).join("\n");
+
+          // Start & end will be like:
+          // 0..20
+          // 21..45
+          // 46..100
+          let linkIndex = 0;
+          filteredScreens.forEach((screen) => {
+            const linkLength = screen.link.length;
+            // @ts-ignore
+            linkNode.setRangeHyperlink(linkIndex, linkIndex + linkLength, { type: "URL", value: screen.link });
+            linkIndex += linkLength + 1;
+          });
+          linkNode.x = nameNode.width + idNode.width + NODE_OFFSET_X * 2;
           page.appendChild(linkNode);
 
           // プラグイン終了
